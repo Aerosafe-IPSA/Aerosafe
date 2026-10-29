@@ -1,0 +1,17 @@
+name: Bug
+description: Un comportement incorrect de l'application
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes pour reproduire
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Résultat attendu / résultat obtenu
+    validations:
+      required: true
