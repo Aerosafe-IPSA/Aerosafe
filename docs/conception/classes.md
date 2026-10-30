@@ -7,8 +7,9 @@
 classDiagram
     %% ===== Groupe Collecteur =====
     class CollecteurOpenSky {
-        +str url_api
-        +tuple zone
+        -str url_api
+        -tuple zone
+        -str jeton
         +recuperer_etats() list~EtatVol~
         +recuperer_aeronef(icao24) Aeronef
     }
@@ -18,7 +19,8 @@ classDiagram
         +str icao24
         +str callsign
         +str pays_origine
-        +list~EtatVol~ historique
+        -list~EtatVol~ historique
+        +ajouter_etat(EtatVol) void
         +derniere_position() EtatVol
     }
     class EtatVol {
@@ -30,15 +32,17 @@ classDiagram
         +float cap
         +float taux_vertical
         +datetime last_contact
+        +datetime time_position
     }
 
     %% ===== Groupe Règles =====
     class Regle {
         <<abstract>>
-        +str nom
-        +float seuil
-        +str message
+        #str nom
+        #float seuil
+        #str message
         +evaluer(Aeronef) Alerte
+        +modifier_seuil(float) void
     }
     class R1DelaiContact {
         +evaluer(Aeronef) Alerte
@@ -56,7 +60,8 @@ classDiagram
         +evaluer(Aeronef) Alerte
     }
     class MoteurRegles {
-        +list~Regle~ regles
+        -list~Regle~ regles
+        +ajouter_regle(Regle) void
         +analyser(Aeronef) list~Alerte~
     }
 
@@ -70,9 +75,18 @@ classDiagram
         +str message
     }
     class DepotAlertes {
+        -connexion connexion
         +enregistrer(Alerte) void
         +lister() list~Alerte~
         +existe_deja(Alerte) bool
+    }
+
+    %% ===== Groupe Authentification (prépare #18) =====
+    class Utilisateur {
+        +str identifiant
+        -str mot_de_passe_hash
+        +str role
+        +verifier_mot_de_passe(mdp) bool
     }
 
     %% ===== Relations =====
@@ -93,15 +107,27 @@ classDiagram
 
 ## Les seuils des règles (R1 à R5)
 
-| Règle | Classe | Seuil |
-|---|---|---|
-| R1 | `R1DelaiContact` | dernier contact > 5 min |
-| R2 | `R2PositionAncienne` | position > 10 min |
-| R3 | `R3VariationAltitude` | > 300 ft/s |
-| R4 | `R4VariationVitesse` | > 100 kt en < 1 min |
-| R5 | `R5ChangementCap` | > 45° en < 1 min |
+Unités conformes aux données OpenSky (m/s).
+
+| Règle | Classe | Seuil | Donnée utilisée |
+|---|---|---|---|
+| R1 | `R1DelaiContact` | dernier contact > 5 min | `last_contact` |
+| R2 | `R2PositionAncienne` | position > 10 min | `time_position` |
+| R3 | `R3VariationAltitude` | > 15 m/s (vertical) | `taux_vertical` |
+| R4 | `R4VariationVitesse` | > 51 m/s en < 60 s | `vitesse` |
+| R5 | `R5ChangementCap` | > 45° en < 60 s | `cap` |
 
 ## Légende des symboles UML
+
+**Visibilité** (devant un attribut ou une méthode) :
+
+| Symbole | Visibilité | Qui y accède |
+|---|---|---|
+| `+` | public | tout le monde (l'interface de la classe) |
+| `-` | privé | uniquement l'intérieur de la classe |
+| `#` | protégé | la classe **et** ses sous-classes |
+
+**Relations** (les traits entre classes) :
 
 | Symbole | Relation | Lecture |
 |---|---|---|
@@ -113,6 +139,8 @@ classDiagram
 
 ## Choix de conception
 
-- **`EtatVol` séparé de `Aeronef`** : un aéronef garde un *historique* d'instantanés. Indispensable pour R3/R4/R5 qui comparent les valeurs **dans le temps** (variation sur moins d'une minute).
-- **`Regle` abstraite + 5 sous-classes** : chaque règle a sa propre logique dans `evaluer()`, mais toutes partagent la même interface. Le `MoteurRegles` les applique sans connaître leur détail → facile d'en ajouter une 6e (prépare la tâche #20).
-- **`DepotAlertes` isolé** : la persistance PostgreSQL est séparée du métier. `existe_deja()` évite les doublons d'alertes (prépare la tâche #22).
+- **`EtatVol` séparé de `Aeronef`** : un aéronef garde un *historique* d'instantanés (privé, alimenté par `ajouter_etat()`). Indispensable pour R3/R4/R5 qui comparent les valeurs **dans le temps** (variation sur moins de 60 s). `last_contact` sert à R1, `time_position` à R2.
+- **`Regle` abstraite + 5 sous-classes** : chaque règle a sa propre logique dans `evaluer()`, mais toutes partagent la même interface. `nom`, `seuil`, `message` sont **protégés (`#`)** car hérités par R1…R5. `modifier_seuil()` permettra au superviseur de régler les seuils sans toucher au code (prépare #29). Le `MoteurRegles` applique les règles sans connaître leur détail → facile d'en ajouter une 6e (prépare #20).
+- **Encapsulation** : les données internes sont **privées (`-`)** et manipulées via des méthodes **publiques (`+`)** — ex. `MoteurRegles._regles` n'est modifiable que par `ajouter_regle()`. `EtatVol` et `Alerte` restent publics car ce sont de simples conteneurs de données.
+- **`DepotAlertes` isolé** : la persistance PostgreSQL (`-connexion`) est séparée du métier. `existe_deja()` évite les doublons d'alertes (prépare #22).
+- **`Utilisateur`** : ajoutée pour le modèle de données V3 ; `mot_de_passe_hash` est **privé**, vérifié via `verifier_mot_de_passe()`. Servira à la connexion et aux rôles (#18).
