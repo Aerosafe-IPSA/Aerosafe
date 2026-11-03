@@ -15,3 +15,9 @@ Projet réalisé en **Scrum** par Tov (Scrum Master), Lucas (Product Owner), Ted
 - Conception : [`docs/conception/`](docs/conception/)
 - Contribuer (branches, commits, pull requests) : [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Versions : [`CHANGELOG.md`](CHANGELOG.md)
+
+## Lancer la base de données
+
+```bash
+docker compose up -d
+```
