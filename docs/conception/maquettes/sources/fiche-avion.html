@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette fiche avion</title>
+<link rel="stylesheet" href="style.css">
+<script src="commun.js"></script>
+</head>
+<body>
+<main>
+  <div>
+    <div class="fil">← Retour aux résultats</div>
+    <div class="titre-fiche">
+      <h1>AFR1462</h1>
+      <span class="etiquette vol">En vol</span>
+      <span class="etiquette alerte">1 alerte en cours</span>
+      <span class="discret">Code ICAO24 <span class="code">39bd24</span> · France</span>
+    </div>
+  </div>
+
+  <section class="panneau indicateurs">
+    <div><small>Altitude</small><b>9 144 m</b></div>
+    <div><small>Vitesse</small><b>228 m/s</b></div>
+    <div><small>Cap</small><b>200°</b></div>
+    <div><small>Taux vertical</small><b>−0,3 m/s</b></div>
+    <div><small>Position</small><b>44,00° N 0,20° E</b></div>
+    <div><small>Dernier contact</small><b>il y a 8 s</b></div>
+  </section>
+
+  <div class="grille-fiche">
+    <section class="panneau">
+      <div class="panneau-titre">
+        <h2>Trajet</h2>
+        <div class="legende"><span><i style="background:#12355b"></i>30 dernières minutes</span><span><i style="background:#c0342b"></i>Point d'alerte</span></div>
+      </div>
+      <svg class="carte" id="carte"></svg>
+    </section>
+    <section class="panneau courbes">
+      <div class="courbe"><header><span>Altitude (m)</span><span>9 144 m</span></header><svg id="c-altitude" viewBox="0 0 528 140"></svg></div>
+      <div class="courbe"><header><span>Vitesse (m/s)</span><span>228 m/s</span></header><svg id="c-vitesse" viewBox="0 0 528 140"></svg></div>
+      <div class="courbe"><header><span>Cap (°)</span><span>200°</span></header><svg id="c-cap" viewBox="0 0 528 140"></svg></div>
+    </section>
+  </div>
+
+  <section class="panneau">
+    <div class="panneau-titre"><h2>Alertes de cet aéronef</h2></div>
+    <table>
+      <thead><tr><th>Date et heure</th><th>Règle</th><th class="num">Valeur observée</th><th class="num">Seuil</th><th>Statut</th></tr></thead>
+      <tbody>
+        <tr><td>01/11/2026 14:32</td><td><span class="regle">R3</span>Variation importante d'altitude</td><td class="num">18,4 m/s</td><td class="num">15 m/s</td><td><span class="etiquette alerte">En cours</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+<script>
+  entete("Utilisateur", "Recherche");
+  pied("Fiche aéronef · carte Leaflet dans l'application");
+
+  const vue = { lonMin: -4.4, lonMax: 7, latMin: 43.4, latMax: 48 };
+  const L = 760;
+  const { p, svg } = fondCarte(vue, L);
+  const points = Array.from({ length: 31 }, (_, i) => VOL.position(i));
+  const trace = points.map(([lon, lat]) => `${p.x(lon).toFixed(1)},${p.y(lat).toFixed(1)}`).join(" ");
+  const [lonA, latA] = points[INDICE_ALERTE];
+  const [lonF, latF] = points[30];
+  const [lonD, latD] = points[0];
+  const carte = document.getElementById("carte");
+  carte.setAttribute("viewBox", `0 0 ${L} 440`);
+  carte.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  carte.innerHTML = `${svg}
+    <polyline points="${trace}" fill="none" stroke="#12355b" stroke-width="3"/>
+    <circle cx="${p.x(lonD)}" cy="${p.y(latD)}" r="5" fill="#fff" stroke="#12355b" stroke-width="2.5"/>
+    <text x="${p.x(lonD) + 10}" y="${p.y(latD) + 4}" font-size="12" font-weight="600" fill="#12355b">14:05</text>
+    <circle cx="${p.x(lonA)}" cy="${p.y(latA)}" r="7" fill="#c0342b" stroke="#fff" stroke-width="2"/>
+    <text x="${p.x(lonA) + 12}" y="${p.y(latA) + 4}" font-size="12" font-weight="700" fill="#c0342b">R3 · 14:32</text>
+    ${avion(p.x(lonF), p.y(latF), 200, "#12355b", 1.5)}
+    <text x="${p.x(lonF) + 12}" y="${p.y(latF) + 12}" font-size="12" font-weight="600" fill="#12355b">14:35</text>`;
+
+  courbe("c-altitude", VOL.altitude, { min: 9000, max: 11000 });
+  courbe("c-vitesse", VOL.vitesse, { min: 220, max: 240 });
+  courbe("c-cap", VOL.cap, { min: 190, max: 210 });
+</script>
+</body>
+</html>

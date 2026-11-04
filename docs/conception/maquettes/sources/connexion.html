@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette connexion</title>
+<link rel="stylesheet" href="style.css">
+<script src="commun.js"></script>
+</head>
+<body>
+<main class="connexion">
+  <div class="logo-connexion">
+    <span id="logo"></span>
+    <strong>AeroSafe</strong>
+    <span class="discret">Surveillance et analyse des données aéronautiques</span>
+  </div>
+  <section class="panneau carte-connexion">
+    <h1>Connexion</h1>
+    <div class="message-erreur" id="erreur" hidden>Identifiant ou mot de passe incorrect. Vérifiez votre saisie et réessayez.</div>
+    <label class="champ"><span>Identifiant</span><div class="saisie" id="identifiant">superviseur.demo</div></label>
+    <label class="champ"><span>Mot de passe</span><div class="saisie" id="motdepasse">••••••••••</div></label>
+    <div class="bouton">Se connecter</div>
+  </section>
+  <span class="discret">Votre rôle détermine la page d'accueil : recherche ou dashboard.</span>
+</main>
+<script>
+  document.getElementById("logo").innerHTML = ICONE_AVION;
+  if (location.search.includes("erreur")) {
+    document.getElementById("erreur").hidden = false;
+    document.getElementById("identifiant").classList.add("erreur");
+    document.getElementById("motdepasse").classList.add("erreur");
+  }
+  pied(location.search.includes("erreur") ? "Connexion, erreur de saisie" : "Connexion");
+</script>
+</body>
+</html>
