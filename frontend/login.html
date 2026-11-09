@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroSafe - Connexion</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 350px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #005ea6;
+        }
+
+        #error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Connexion AeroSafe</h2>
+
+    <form id="loginForm">
+
+        <input type="email" id="email" placeholder="Adresse e-mail" required>
+
+        <input type="password" id="password" placeholder="Mot de passe" required>
+
+        <button type="submit">
+            Se connecter
+        </button>
+
+        <p id="error"></p>
+
+    </form>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm").addEventListener("submit", function(event){
+
+    event.preventDefault();
+
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let error = document.getElementById("error");
+
+    if(email === "admin@aerosafe.com" && password === "admin123"){
+        window.location.href = "dashboard.html";
+    }
+    else if(email === "chercheur@aerosafe.com" && password === "chercheur123"){
+        window.location.href = "recherche.html";
+    }
+    else{
+        error.textContent = "Email ou mot de passe incorrect.";
+    }
+
+});
+
+</script>
+
+</body>
+</html>
