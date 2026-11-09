@@ -15,3 +15,19 @@ Projet réalisé en **Scrum** par Tov (Scrum Master), Lucas (Product Owner), Ted
 - Conception : [`docs/conception/`](docs/conception/)
 - Contribuer (branches, commits, pull requests) : [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Versions : [`CHANGELOG.md`](CHANGELOG.md)
+
+## Lancer la base de données
+
+1. Copier le fichier d'exemple de configuration :
+
+```bash
+cp .env.example .env
+```
+
+   Sous PowerShell, utiliser `copy .env.example .env`. Ouvrir ensuite `.env` et remplacer `POSTGRES_PASSWORD` par un mot de passe de votre choix.
+
+2. Démarrer la base :
+
+```bash
+docker compose up -d
+```
