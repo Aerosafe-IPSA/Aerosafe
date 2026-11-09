@@ -16,6 +16,8 @@ Pendant la phase de cadrage, nous avons travaillé en sprints de **deux semaines
 | S7 | 23 → 29 nov. 2026 | Finitions, documentation, release v1.0 |
 | S8 | 30 nov. → 6 déc. 2026 | Présentation, répétitions de la démo, module IA (bonus) |
 
+Le sprint 3 ayant débordé, le sprint 4 a démarré avec une semaine de retard, le 9 novembre : voir `sprints/sprint-04.md`.
+
 Jalons fixes : **1er décembre** envoi du cahier des charges et du lien GitHub — **9 décembre à 14h** soutenance.
 
 ## Cérémonies
