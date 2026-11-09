@@ -10,14 +10,20 @@
 |---|---|---|---|
 | #15 Récupérer les avions sur OpenSky toutes les minutes | Lucas | 5 | Must |
 | #16 Enregistrer l'historique des positions en base | Lucas | 3 | Must |
-| #17 Données de secours pour la démo | Lucas | 2 | Must |
-| #18 Connexion avec un rôle (utilisateur / superviseur) | Ryan | 5 | Must |
+| #18 Connexion avec un rôle (utilisateur / superviseur) | Tov | 5 | Must |
 | #19 Tests automatiques à chaque PR (CI) | Tov | 2 | Must |
-| #25 Page de connexion (gabarit Jinja2 et CSS des maquettes) | Teddy | 2 | Must |
+| #20 Moteur de règles + règles R1 et R2 | Ryan | 5 | Must |
+| #25 Page de connexion | Teddy | 2 | Must |
+| #26 Page de recherche | Teddy | 3 | Must |
 
-**Capacité engagée** : 19 points.
+**Capacité engagée** : 25 points.
 
-La page de connexion (#25), prévue au sprint 6, est avancée pour que Teddy démarre l'interface en même temps que la connexion côté API (#18).
+**Répartition revue le 9 novembre** : la charge était déséquilibrée (Tov n'avait plus de tâche après la CI, Ryan en avait trop). Le Product Owner a donc :
+
+- confié la connexion (#18) à Tov à la place de Ryan ;
+- avancé le moteur de règles (#20) du sprint 5 au sprint 4, pour Ryan ;
+- avancé les pages de connexion (#25) et de recherche (#26) pour Teddy ;
+- reporté les données de secours (#17) au sprint 5, confiées à Tov.
 
 **Conséquence du retard** : il reste trois sprints (5, 6, 7) avant le rendu du 1er décembre, pour deux semaines. Le planning des sprints suivants sera ajusté à la revue du 15 novembre ; si nécessaire, les stories Should puis Could seront abandonnées, jamais la date.
 
