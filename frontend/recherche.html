@@ -2,16 +2,141 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Recherche AeroSafe</title>
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroSafe - Recherche</title>
 
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:40px;
+            background:#f4f4f4;
+        }
+
+        h1{
+            text-align:center;
+        }
+
+        input{
+            width:100%;
+            padding:12px;
+            margin-top:20px;
+            margin-bottom:20px;
+            box-sizing:border-box;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            background:white;
+        }
+
+        th, td{
+            border:1px solid #ddd;
+            padding:12px;
+            text-align:left;
+        }
+
+        th{
+            background:#0078d4;
+            color:white;
+        }
+
+        tr:nth-child(even){
+            background:#f9f9f9;
+        }
+    </style>
+</head>
 <body>
 
-    <h1>Page de recherche AeroSafe</h1>
+<h1>Recherche d'avions AeroSafe</h1>
 
-    <p>
-        Bienvenue sur la page de recherche des vols.
-    </p>
+<input
+    type="text"
+    id="searchInput"
+    placeholder="Rechercher un avion..."
+>
+
+<table>
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Indicatif</th>
+            <th>Statut</th>
+        </tr>
+    </thead>
+    <tbody id="resultats">
+    </tbody>
+</table>
+
+<script>
+
+const avions = [
+{
+    code:"AF001",
+    indicatif:"AIRFRANCE001",
+    statut:"En vol"
+},
+{
+    code:"BA202",
+    indicatif:"BRITISH202",
+    statut:"Au sol"
+},
+{
+    code:"LH303",
+    indicatif:"LUFTHANSA303",
+    statut:"Maintenance"
+},
+{
+    code:"IB404",
+    indicatif:"IBERIA404",
+    statut:"En vol"
+}
+];
+
+function afficherResultats(liste){
+
+    const tbody = document.getElementById("resultats");
+    tbody.innerHTML = "";
+
+    liste.forEach(avion => {
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${avion.code}</td>
+                <td>${avion.indicatif}</td>
+                <td>${avion.statut}</td>
+            </tr>
+        `;
+
+    });
+
+}
+
+afficherResultats(avions);
+
+document
+.getElementById("searchInput")
+.addEventListener("keyup", function(){
+
+    const recherche =
+    this.value.toLowerCase();
+
+    const resultat =
+    avions.filter(avion =>
+
+        avion.code.toLowerCase().includes(recherche)
+        ||
+        avion.indicatif.toLowerCase().includes(recherche)
+        ||
+        avion.statut.toLowerCase().includes(recherche)
+
+    );
+
+    afficherResultats(resultat);
+
+});
+
+</script>
 
 </body>
 </html>
