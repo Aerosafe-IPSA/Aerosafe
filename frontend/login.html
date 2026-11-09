@@ -49,4 +49,57 @@
         }
 
         #error {
-     
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Connexion AeroSafe</h2>
+
+    <form id="loginForm">
+
+        <input type="email" id="email" placeholder="Adresse e-mail" required>
+
+        <input type="password" id="password" placeholder="Mot de passe" required>
+
+        <button type="submit">
+            Se connecter
+        </button>
+
+        <p id="error"></p>
+
+    </form>
+
+</div>
+
+<script>
+
+document.getElementById("loginForm").addEventListener("submit", function(event){
+
+    event.preventDefault();
+
+    let email = document.getElementById("email").value;
+    let password = document.getElementById("password").value;
+    let error = document.getElementById("error");
+
+    if(email === "admin@aerosafe.com" && password === "admin123"){
+        window.location.href = "dashboard.html";
+    }
+    else if(email === "chercheur@aerosafe.com" && password === "chercheur123"){
+        window.location.href = "recherche.html";
+    }
+    else{
+        error.textContent = "Email ou mot de passe incorrect.";
+    }
+
+});
+
+</script>
+
+</body>
+</html>
