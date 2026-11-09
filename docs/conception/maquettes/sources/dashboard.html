@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette dashboard</title>
+<link rel="stylesheet" href="style.css">
+<script src="commun.js"></script>
+</head>
+<body>
+<main>
+  <h1>Dashboard superviseur</h1>
+
+  <div class="tuiles">
+    <section class="panneau tuile"><small>Aéronefs suivis</small><b>128</b></section>
+    <section class="panneau tuile rouge"><small>Alertes en cours</small><b>5</b></section>
+    <section class="panneau tuile"><small>Alertes traitées aujourd'hui</small><b>3</b></section>
+  </div>
+
+  <div class="grille-dash">
+    <section class="panneau panneau-carte">
+      <div class="panneau-titre">
+        <h2>Carte des aéronefs</h2>
+        <div class="legende"><span><i style="background:#7c8a9a"></i>Suivi</span><span><i style="background:#c0342b"></i>En alerte</span></div>
+      </div>
+      <svg class="carte" id="carte"></svg>
+    </section>
+
+    <section class="panneau">
+      <div class="panneau-titre">
+        <h2>Alertes en cours</h2>
+        <span class="discret">Plus récentes d'abord</span>
+      </div>
+      <div class="filtres">
+        <label>Règle<div class="saisie chevron">Toutes</div></label>
+        <label>Aéronef<div class="saisie chevron">Tous</div></label>
+        <label>Date<div class="saisie chevron">01/11/2026</div></label>
+      </div>
+      <table>
+        <thead><tr><th>Heure</th><th>Aéronef</th><th>Règle</th><th class="num">Observé</th><th class="num">Seuil</th><th></th></tr></thead>
+        <tbody id="alertes"></tbody>
+      </table>
+    </section>
+  </div>
+</main>
+<script>
+  entete("Superviseur", "Dashboard");
+  pied("Dashboard superviseur · carte Leaflet dans l'application");
+
+  document.getElementById("alertes").innerHTML = ALERTES.map(a => `
+    <tr>
+      <td>${a.heure}</td>
+      <td class="lien">${a.avion}</td>
+      <td><span class="regle">${a.regle}</span>${a.message}</td>
+      <td class="num">${a.valeur}</td>
+      <td class="num">${a.seuil}</td>
+      <td><span class="bouton petit">Traitée</span></td>
+    </tr>`).join("");
+
+  // Zone de collecte : la France métropolitaine du script test_opensky.py.
+  const vue = { lonMin: -5.2, lonMax: 9.6, latMin: 41.3, latMax: 51.1 };
+  const L = 558;
+  const { p, svg } = fondCarte(vue, L);
+
+  // 123 aéronefs sans alerte + les 5 en alerte = 128 suivis.
+  let graine = 7;
+  const hasard = () => (graine = (graine * 16807) % 2147483647) / 2147483647;
+  const suivis = Array.from({ length: 123 }, () =>
+    avion(p.x(vue.lonMin + .4 + hasard() * 13.8), p.y(vue.latMin + .4 + hasard() * 9), Math.round(hasard() * 360), "#7c8a9a", .8)).join("");
+  const enAlerte = ALERTES.map(a => `
+    ${avion(p.x(a.lon), p.y(a.lat), a.cap, "#c0342b", 1.3)}
+    <text x="${p.x(a.lon) + 10}" y="${p.y(a.lat) + 4}" font-size="11" font-weight="700" fill="#c0342b" paint-order="stroke" stroke="#fff" stroke-width="3">${a.avion}</text>`).join("");
+
+  const carte = document.getElementById("carte");
+  carte.setAttribute("viewBox", `0 0 ${L} ${Math.round(p.hauteur)}`);
+  carte.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  carte.innerHTML = svg + suivis + enAlerte;
+</script>
+</body>
+</html>
