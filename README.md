@@ -32,3 +32,25 @@ cp .env.example .env
 ```bash
 docker compose up -d
 ```
+
+## Lancer la collecte et l'API
+
+Une fois la base démarrée :
+
+```bash
+pip install -r requirements.txt
+python -m collector
+uvicorn backend.main:app --reload
+```
+
+- `python -m collector` interroge OpenSky toutes les 60 secondes et enregistre les positions en base (voir [`collector/`](collector/README.md)).
+- `uvicorn backend.main:app --reload` lance l'API ; sa documentation est sur http://127.0.0.1:8000/docs (voir [`backend/`](backend/README.md)).
+
+## Vérifier le code
+
+```bash
+pip install ruff pytest
+ruff check .
+pytest
+```
+

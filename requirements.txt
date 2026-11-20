@@ -1,12 +1,8 @@
 requests
 python-dotenv
-
-# Backend API (auth #18)
+sqlalchemy>=2.0,<2.2
+psycopg[binary]>=3.1
 fastapi
 uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-bcrypt
-pyjwt
-pydantic[email]
+# Nécessaire aux tests de l'API (client de test FastAPI)
 httpx

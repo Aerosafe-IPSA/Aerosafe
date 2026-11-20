@@ -10,13 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 
-def _horodatage(secondes: float | None) -> datetime | None:
-    """Convertit un horodatage Unix (secondes) en date UTC, ou renvoie None."""
-    if secondes is None:
-        return None
-    return datetime.fromtimestamp(secondes, tz=timezone.utc)
-
-
 @dataclass
 class EtatVol:
     """Instantané de l'état d'un aéronef à un moment donné.
@@ -36,6 +29,13 @@ class EtatVol:
     last_contact: datetime | None
     time_position: datetime | None
 
+    @staticmethod
+    def convertir_horodatage(secondes: float | None) -> datetime | None:
+        """Convertit un horodatage Unix (secondes) en date UTC, ou renvoie None."""
+        if secondes is None:
+            return None
+        return datetime.fromtimestamp(secondes, tz=timezone.utc)
+
     @classmethod
     def depuis_opensky(cls, etat: list, horodatage: int) -> EtatVol:
         """Construit un état à partir d'une ligne ``states`` de l'API OpenSky.
@@ -48,7 +48,7 @@ class EtatVol:
             L'état de vol correspondant.
         """
         return cls(
-            horodatage=_horodatage(horodatage),
+            horodatage=cls.convertir_horodatage(horodatage),
             latitude=etat[6],
             longitude=etat[5],
             altitude=etat[7],
@@ -56,8 +56,8 @@ class EtatVol:
             cap=etat[10],
             taux_vertical=etat[11],
             au_sol=bool(etat[8]),
-            last_contact=_horodatage(etat[4]),
-            time_position=_horodatage(etat[3]),
+            last_contact=cls.convertir_horodatage(etat[4]),
+            time_position=cls.convertir_horodatage(etat[3]),
         )
 
 
