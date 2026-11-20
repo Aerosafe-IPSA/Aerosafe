@@ -5,3 +5,10 @@ testpaths = ["tests"]
 [tool.ruff]
 # Le code doit tourner sur Python 3.9 (Mac) comme sur 3.11 (CI)
 target-version = "py39"
+
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy, Pydantic et FastAPI lisent les annotations à l'exécution :
+# l'écriture `X | None` n'y passe pas sous Python 3.9, on garde `Optional[X]`.
+"backend/bdd.py" = ["UP045"]
+"backend/schemas_aeronefs.py" = ["UP045"]
+"backend/api_aeronefs.py" = ["UP045"]
