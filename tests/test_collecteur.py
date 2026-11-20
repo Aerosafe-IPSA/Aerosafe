@@ -5,9 +5,9 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 
-from collector.__main__ import boucle
 from collector.collecteur import CollecteurOpenSky, ErreurOpenSky
 from collector.modeles import Aeronef, EtatVol
+from collector.service import ServiceCollecte
 
 # Deux lignes au format OpenSky : 17 valeurs par aéronef
 ETAT_COMPLET = [
@@ -166,11 +166,25 @@ def test_historique_etat_precedent():
     assert avion.etat_precedent() is premier
 
 
-def test_boucle_continue_apres_une_erreur(monkeypatch):
-    monkeypatch.setattr("collector.__main__.time.sleep", lambda _: None)
+def test_service_continue_apres_une_erreur(monkeypatch):
+    monkeypatch.setattr("collector.service.time.sleep", lambda _: None)
     collecteur = MagicMock()
     collecteur.recuperer_etats.side_effect = [ErreurOpenSky("quota"), []]
 
-    boucle(collecteur, cycles=2)
+    ServiceCollecte(collecteur).lancer(cycles=2)
 
     assert collecteur.recuperer_etats.call_count == 2
+
+
+def test_convertir_horodatage():
+    assert EtatVol.convertir_horodatage(None) is None
+    assert EtatVol.convertir_horodatage(0).year == 1970
+
+
+def test_reponse_illisible_leve_une_erreur():
+    rep = reponse(contenu=None)
+    rep.json.side_effect = ValueError("pas du JSON")
+    collecteur, _ = collecteur_avec(rep)
+
+    with pytest.raises(ErreurOpenSky, match="illisible"):
+        collecteur.recuperer_etats()

@@ -85,7 +85,8 @@ class CollecteurOpenSky:
             Un ``Aeronef`` par avion, contenant son état le plus récent.
 
         Raises:
-            ErreurOpenSky: quota dépassé (429), erreur HTTP ou API injoignable.
+            ErreurOpenSky: quota dépassé (429), erreur HTTP, réponse illisible
+                ou API injoignable.
         """
         try:
             self._rafraichir_jeton()
@@ -104,7 +105,10 @@ class CollecteurOpenSky:
                 f"Réponse OpenSky inattendue : HTTP {reponse.status_code}"
             )
 
-        donnees = reponse.json()
+        try:
+            donnees = reponse.json()
+        except ValueError as erreur:
+            raise ErreurOpenSky("Réponse OpenSky illisible (JSON invalide)") from erreur
         horodatage = donnees.get("time")
         aeronefs = []
         for etat in donnees.get("states") or []:

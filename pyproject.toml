@@ -5,3 +5,7 @@ testpaths = ["tests"]
 [tool.ruff]
 # Le code doit tourner sur Python 3.9 (Mac) comme sur 3.11 (CI)
 target-version = "py39"
+
+[tool.ruff.lint.per-file-ignores]
+# SQLAlchemy lit les annotations des tables à l'exécution : `X | None` n'y passe pas sous Python 3.9
+"backend/bdd.py" = ["UP045"]

@@ -1,2 +1,4 @@
 requests
 python-dotenv
+sqlalchemy>=2.0,<2.2
+psycopg[binary]>=3.1
