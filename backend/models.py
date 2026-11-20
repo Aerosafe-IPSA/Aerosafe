@@ -3,6 +3,7 @@ Modèles ORM SQLAlchemy — définissent la structure des tables en base de donn
 """
 
 from sqlalchemy import Column, Integer, String
+
 from backend.database import Base
 
 

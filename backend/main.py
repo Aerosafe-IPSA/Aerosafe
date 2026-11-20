@@ -3,15 +3,15 @@ Point d'entrée de l'API AeroSafe.
 Initialise l'application FastAPI, crée les tables en base et définit les routes.
 """
 
-from fastapi import FastAPI, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, HTTPException, status
+from sqlalchemy.orm import Session
 
-from backend.database import engine, Base, get_db
-from backend.models import Utilisateur
-from backend.security import verifier_mot_de_passe, creer_token
-from backend.schemas import LoginRequest, TokenResponse, UtilisateurInfo
+from backend.database import Base, engine, get_db
 from backend.dependencies import get_current_user, require_superviseur
+from backend.models import Utilisateur
+from backend.schemas import LoginRequest, TokenResponse, UtilisateurInfo
+from backend.security import ServiceAuthentification
 
 load_dotenv()
 
@@ -30,10 +30,10 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(Utilisateur).filter(Utilisateur.email == data.email).first()
 
     # On vérifie l'existance de l'utilisateur et la validité du mot de passe
-    if not user or not verifier_mot_de_passe(data.mot_de_passe, user.mot_de_passe_hash):
+    if not user or not ServiceAuthentification.verifier_mot_de_passe(data.mot_de_passe, user.mot_de_passe_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Identifiants invalides")
 
-    return TokenResponse(access_token=creer_token(user.email, user.role))
+    return TokenResponse(access_token=ServiceAuthentification.creer_token(user.email, user.role))
 
 
 @app.get("/me", response_model=UtilisateurInfo)

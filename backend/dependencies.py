@@ -6,8 +6,9 @@ Ces fonctions sont injectées dans les routes via Depends().
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt import PyJWTError
-from backend.security import decoder_token
+
 from backend.schemas import UtilisateurInfo
+from backend.security import ServiceAuthentification
 
 # Indique à FastAPI où récuperer le token (utilisé pour la doc Swagger)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
@@ -20,7 +21,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> UtilisateurInfo:
     sinon lève une erreur 401.
     """
     try:
-        payload = decoder_token(token)
+        payload = ServiceAuthentification.decoder_token(token)
         return UtilisateurInfo(email=payload["sub"], role=payload["role"])
     except PyJWTError:
         raise HTTPException(

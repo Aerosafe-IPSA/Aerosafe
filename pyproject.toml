@@ -5,3 +5,7 @@ testpaths = ["tests"]
 [tool.ruff]
 # Le code doit tourner sur Python 3.9 (Mac) comme sur 3.11 (CI)
 target-version = "py39"
+
+[tool.ruff.lint]
+# B008 : Depends() en argument de fonction est le pattern officiel FastAPI, pas un bug
+ignore = ["B008"]
