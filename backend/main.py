@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from backend.database import engine, Base, get_db
 from backend.models import Utilisateur
-from backend.security import hasher_mot_de_passe, verifier_mot_de_passe, creer_token
+from backend.security import verifier_mot_de_passe, creer_token
 from backend.schemas import LoginRequest, TokenResponse, UtilisateurInfo
 from backend.dependencies import get_current_user, require_superviseur
 
