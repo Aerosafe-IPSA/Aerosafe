@@ -1,2 +1,11 @@
 requests
 python-dotenv
+
+# Backend API (auth #18)
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+bcrypt
+pyjwt
+pydantic[email]
