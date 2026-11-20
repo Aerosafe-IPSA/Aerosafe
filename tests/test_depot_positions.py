@@ -6,7 +6,13 @@ import pytest
 from sqlalchemy import inspect, select
 from sqlalchemy.exc import OperationalError
 
-from backend.bdd import AircraftTable, BaseDeDonnees, ObservationTable
+from backend.bdd import (
+    AircraftTable,
+    BaseDeDonnees,
+    BaseInjoignableError,
+    ObservationTable,
+)
+from collector.__main__ import main
 from collector.depot_positions import DepotPositions
 from collector.modeles import Aeronef, EtatVol
 from collector.service import ServiceCollecte
@@ -143,3 +149,23 @@ def test_cycle_renvoie_le_nombre_de_nouvelles_positions(base):
 
     assert service.executer_cycle() == 2
     assert service.executer_cycle() == 0
+
+
+def test_base_injoignable_leve_une_erreur_claire():
+    # Port 1 : aucune base n'y répond, la connexion est refusée tout de suite
+    with pytest.raises(BaseInjoignableError, match="docker compose up -d"):
+        BaseDeDonnees("postgresql+psycopg://u:p@127.0.0.1:1/aerosafe")
+
+
+def test_collecteur_s_arrete_proprement_sans_base(monkeypatch, caplog):
+    def base_absente():
+        raise BaseInjoignableError("Base de données injoignable.")
+
+    monkeypatch.setattr("collector.__main__.BaseDeDonnees", base_absente)
+    monkeypatch.setattr("collector.__main__.load_dotenv", lambda: None)
+
+    with pytest.raises(SystemExit) as arret:
+        main()
+
+    assert arret.value.code == 1
+    assert "Base de données injoignable" in caplog.text

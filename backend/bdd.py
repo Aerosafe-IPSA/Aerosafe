@@ -21,8 +21,13 @@ from sqlalchemy import (
     create_engine,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.pool import StaticPool
+
+
+class BaseInjoignableError(Exception):
+    """Levée quand la base de données ne répond pas à l'ouverture de la connexion."""
 
 
 class Base(DeclarativeBase):
@@ -77,6 +82,9 @@ class BaseDeDonnees:
 
         Args:
             url: adresse SQLAlchemy de la base ; par défaut celle du fichier .env.
+
+        Raises:
+            BaseInjoignableError: la base ne répond pas.
         """
         self._url = url or self.url_depuis_env()
         options = {}
@@ -90,7 +98,14 @@ class BaseDeDonnees:
             # Toutes les dates sont lues et écrites en UTC (cahier des charges V3)
             options = {"connect_args": {"options": "-c timezone=utc"}}
         self._moteur = create_engine(self._url, **options)
-        Base.metadata.create_all(self._moteur)
+        try:
+            Base.metadata.create_all(self._moteur)
+        except OperationalError as erreur:
+            raise BaseInjoignableError(
+                "Base de données injoignable. Vérifie que Docker est démarré, lance "
+                "`docker compose up -d`, puis contrôle les variables POSTGRES_* du "
+                "fichier .env."
+            ) from erreur
 
     @property
     def moteur(self) -> Engine:
