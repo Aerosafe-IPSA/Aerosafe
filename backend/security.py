@@ -11,6 +11,10 @@ import bcrypt
 import jwt
 
 
+class ConfigurationManquanteError(Exception):
+    """Levée quand JWT_SECRET n'est pas défini dans le fichier .env."""
+
+
 class ServiceAuthentification:
     """Regroupe le hashage de mots de passe et la gestion des tokens JWT."""
 
@@ -26,18 +30,26 @@ class ServiceAuthentification:
         return bcrypt.checkpw(mot_de_passe.encode(), hash_stocke.encode())
 
     @staticmethod
-    def creer_token(email: str, role: str) -> str:
-        """Génère un token JWT signé (payload : sub, role, exp)."""
+    def _secret() -> str:
+        """Lit la clé de signature des tokens, obligatoire."""
         secret = os.getenv("JWT_SECRET")
+        if not secret:
+            raise ConfigurationManquanteError(
+                "JWT_SECRET est absent : ajoute-le dans le fichier .env (voir .env.example)"
+            )
+        return secret
+
+    @classmethod
+    def creer_token(cls, email: str, role: str) -> str:
+        """Génère un token JWT signé (payload : sub, role, exp)."""
         algorithme = os.getenv("JWT_ALGORITHM", "HS256")
         duree = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
         expiration = datetime.now(timezone.utc) + timedelta(minutes=duree)
         payload = {"sub": email, "role": role, "exp": expiration}
-        return jwt.encode(payload, secret, algorithm=algorithme)
+        return jwt.encode(payload, cls._secret(), algorithm=algorithme)
 
-    @staticmethod
-    def decoder_token(token: str) -> dict:
+    @classmethod
+    def decoder_token(cls, token: str) -> dict:
         """Décode et vérifie un token JWT. Lève PyJWTError si invalide ou expiré."""
-        secret = os.getenv("JWT_SECRET")
         algorithme = os.getenv("JWT_ALGORITHM", "HS256")
-        return jwt.decode(token, secret, algorithms=[algorithme])
+        return jwt.decode(token, cls._secret(), algorithms=[algorithme])

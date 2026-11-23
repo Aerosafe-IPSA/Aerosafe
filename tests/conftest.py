@@ -7,4 +7,4 @@ d'environnement nécessaires avant que les modules backend soient importés.
 import os
 
 # Valeur factice utilisée uniquement pendant les tests
-os.environ.setdefault("JWT_SECRET", "secret-de-test-pour-pytest")
+os.environ.setdefault("JWT_SECRET", "secret-de-test-pour-pytest-0123456789abcdef")

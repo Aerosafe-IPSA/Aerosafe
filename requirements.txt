@@ -6,3 +6,7 @@ fastapi
 uvicorn[standard]
 # Nécessaire aux tests de l'API (client de test FastAPI)
 httpx
+# Connexion (#18) : hachage des mots de passe, jetons JWT, validation des e-mails
+bcrypt
+pyjwt
+pydantic[email]
