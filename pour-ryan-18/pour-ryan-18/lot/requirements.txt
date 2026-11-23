@@ -1,0 +1,12 @@
+requests
+python-dotenv
+sqlalchemy>=2.0,<2.2
+psycopg[binary]>=3.1
+fastapi
+uvicorn[standard]
+# Nécessaire aux tests de l'API (client de test FastAPI)
+httpx
+# Connexion (#18) : hachage des mots de passe, jetons JWT, validation des e-mails
+bcrypt
+pyjwt
+pydantic[email]

@@ -1,34 +1,26 @@
-"""
-R1 — Délai de contact dépassé.
-Déclenche une alerte si l'avion n'a pas été contacté depuis plus de 5 minutes.
-"""
+"""R1 — Délai de contact dépassé (seuil : 300 s)."""
 
-from datetime import datetime, timedelta, timezone
+from __future__ import annotations
 
+from backend.rules.alerte import Alerte
 from backend.rules.base import Regle
-from collector.modeles import EtatVol
-
-SEUIL = timedelta(minutes=5)
+from collector.modeles import Aeronef
 
 
 class R1DelaiContact(Regle):
-    """
-    Règle R1 : le dernier contact radio date de plus de 5 minutes.
-    Peut indiquer une perte de signal ou une panne du transpondeur.
-    """
+    """Règle R1 : aucun contact radio depuis plus de 5 minutes."""
 
-    @property
-    def nom(self) -> str:
-        return "R1DelaiContact"
+    def __init__(self, seuil: float = 300.0) -> None:
+        """Crée la règle avec son seuil en secondes."""
+        super().__init__("R1", seuil)
 
-    @property
-    def description(self) -> str:
-        return "Aucun contact depuis plus de 5 minutes"
-
-    def evaluer(self, etat: EtatVol) -> bool:
-        """Retourne True si last_contact est absent ou trop ancien."""
-        if etat.last_contact is None:
-            return True  # Pas de donnée de contact = anomalie par défaut
-
-        maintenant = datetime.now(timezone.utc)
-        return (maintenant - etat.last_contact) > SEUIL
+    def evaluer(self, aeronef: Aeronef) -> Alerte | None:
+        """Renvoie une alerte si le délai depuis le dernier contact dépasse le seuil."""
+        etat = aeronef.derniere_position()
+        if etat is None or etat.last_contact is None:
+            return None
+        valeur = (etat.horodatage - etat.last_contact).total_seconds()
+        if valeur <= self._seuil:
+            return None
+        message = f"Aucun contact depuis {valeur:.0f} s (seuil : {self._seuil:.0f} s)"
+        return self._alerte(aeronef, etat, valeur, message)
