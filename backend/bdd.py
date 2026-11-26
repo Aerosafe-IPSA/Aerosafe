@@ -1,8 +1,8 @@
 """Connexion à PostgreSQL et tables de l'historique des vols.
 
 Les tables suivent le modèle de données du cahier des charges V3 :
-``aircraft`` (un aéronef), ``observation`` (une position reçue à un instant) et
-``app_user`` (un compte).
+``aircraft`` (un aéronef), ``observation`` (une position reçue à un instant),
+``app_user`` (un compte) et ``alert`` (une anomalie détectée par une règle).
 """
 
 from __future__ import annotations
@@ -87,6 +87,26 @@ class UtilisateurTable(Base):
     email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
     mot_de_passe_hash: Mapped[str] = mapped_column(String(128))
     role: Mapped[str] = mapped_column(String(16), default="utilisateur")
+
+
+class AlerteTable(Base):
+    """Table ``alert`` : une anomalie détectée par une règle sur un aéronef.
+
+    Les colonnes reprennent la classe ``Alerte`` du diagramme de classes.
+    """
+
+    __tablename__ = "alert"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    icao24: Mapped[str] = mapped_column(
+        String(6), ForeignKey("aircraft.icao24"), index=True
+    )
+    nom_regle: Mapped[str] = mapped_column(String(8))
+    date_heure: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    valeur_observee: Mapped[float] = mapped_column(Float)
+    seuil: Mapped[float] = mapped_column(Float)
+    message: Mapped[str] = mapped_column(String(200))
+    statut: Mapped[str] = mapped_column(String(16), default="en cours")
 
 
 class BaseDeDonnees:

@@ -19,6 +19,8 @@ class ResumeAeronef(BaseModel):
     callsign: Optional[str]
     pays_origine: Optional[str]
     statut: str
+    latitude: Optional[float]
+    longitude: Optional[float]
     altitude: Optional[float]
     dernier_contact: Optional[datetime]
     derniere_observation: datetime

@@ -9,9 +9,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api_aeronefs import ApiAeronefs
+from backend.api_alertes import ApiAlertes
 from backend.api_connexion import ApiConnexion
 from backend.bdd import BaseDeDonnees
 from backend.depot_aeronefs import DepotAeronefs
+from backend.depot_alertes import DepotAlertes
 from backend.depot_utilisateurs import DepotUtilisateurs
 
 
@@ -19,7 +21,8 @@ class ApplicationAeroSafe:
     """Crée l'application FastAPI et y branche les routes de chaque domaine.
 
     Toutes les routes de données, sauf ``/login``, exigent un jeton valide
-    (exigence BNF-03). Les pages de l'interface sont servies sous ``/app``.
+    (exigence BNF-03) ; ``/alerts`` et ``/stats`` sont réservées au superviseur.
+    Les pages de l'interface sont servies sous ``/app``.
     Pour ajouter un domaine (alertes, règles), il suffit de créer sa classe d'API
     et d'ajouter son routeur dans ``_brancher_routes``.
     """
@@ -49,6 +52,12 @@ class ApplicationAeroSafe:
         self._app.include_router(connexion.routeur)
         self._app.include_router(
             ApiAeronefs(DepotAeronefs(self._base)).routeur, dependencies=compte_connecte
+        )
+        alertes = ApiAlertes(DepotAlertes(self._base))
+        self._app.include_router(alertes.routeur_aeronef, dependencies=compte_connecte)
+        self._app.include_router(
+            alertes.routeur,
+            dependencies=[Depends(connexion.garde_superviseur.verifier)],
         )
 
     def _brancher_interface(self) -> None:

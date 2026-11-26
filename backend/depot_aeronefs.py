@@ -80,6 +80,8 @@ class DepotAeronefs:
                 ObservationTable.on_ground,
                 ObservationTable.last_contact,
                 ObservationTable.baro_altitude,
+                ObservationTable.latitude,
+                ObservationTable.longitude,
             )
             .outerjoin(ObservationTable, dernier_etat)
             .order_by(AircraftTable.last_seen.desc(), AircraftTable.icao24)
@@ -105,6 +107,8 @@ class DepotAeronefs:
                 callsign=ligne.callsign,
                 pays_origine=ligne.origin_country,
                 statut=self._statut(ligne),
+                latitude=ligne.latitude,
+                longitude=ligne.longitude,
                 altitude=ligne.baro_altitude,
                 dernier_contact=ligne.last_contact,
                 derniere_observation=ligne.last_seen,
