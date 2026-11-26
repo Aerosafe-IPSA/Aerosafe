@@ -79,9 +79,12 @@ class Aeronef:
         self.pays_origine = pays_origine
         self._historique: list[EtatVol] = []
 
+    HISTORIQUE_MAXIMAL = 20
+
     def ajouter_etat(self, etat: EtatVol) -> None:
-        """Ajoute un état à la fin de l'historique."""
+        """Ajoute un état à la fin de l'historique, en gardant au plus HISTORIQUE_MAXIMAL entrées."""
         self._historique.append(etat)
+        del self._historique[: -self.HISTORIQUE_MAXIMAL]
 
     def derniere_position(self) -> EtatVol | None:
         """Renvoie l'état le plus récent, ou None si l'historique est vide."""

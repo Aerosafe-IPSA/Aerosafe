@@ -1,34 +1,26 @@
-"""
-R2 — Position GPS ancienne.
-Déclenche une alerte si la dernière position GPS reçue date de plus de 10 minutes.
-"""
+"""R2 — Position GPS ancienne (seuil : 600 s)."""
 
-from datetime import datetime, timedelta, timezone
+from __future__ import annotations
 
+from backend.rules.alerte import Alerte
 from backend.rules.base import Regle
-from collector.modeles import EtatVol
-
-SEUIL = timedelta(minutes=10)
+from collector.modeles import Aeronef
 
 
 class R2PositionAncienne(Regle):
-    """
-    Règle R2 : la dernière position GPS connue date de plus de 10 minutes.
-    Différent de R1 : on peut avoir un contact radio sans position GPS récente.
-    """
+    """Règle R2 : position GPS non mise à jour depuis plus de 10 minutes."""
 
-    @property
-    def nom(self) -> str:
-        return "R2PositionAncienne"
+    def __init__(self, seuil: float = 600.0) -> None:
+        """Crée la règle avec son seuil en secondes."""
+        super().__init__("R2", seuil)
 
-    @property
-    def description(self) -> str:
-        return "Position GPS non mise à jour depuis plus de 10 minutes"
-
-    def evaluer(self, etat: EtatVol) -> bool:
-        """Retourne True si time_position est absent ou trop ancien."""
-        if etat.time_position is None:
-            return True  # Pas de position GPS = anomalie
-
-        maintenant = datetime.now(timezone.utc)
-        return (maintenant - etat.time_position) > SEUIL
+    def evaluer(self, aeronef: Aeronef) -> Alerte | None:
+        """Renvoie une alerte si la position GPS n'a pas été mise à jour depuis trop longtemps."""
+        etat = aeronef.derniere_position()
+        if etat is None or etat.time_position is None:
+            return None
+        valeur = (etat.horodatage - etat.time_position).total_seconds()
+        if valeur <= self._seuil:
+            return None
+        message = f"Position GPS vieille de {valeur:.0f} s (seuil : {self._seuil:.0f} s)"
+        return self._alerte(aeronef, etat, valeur, message)
