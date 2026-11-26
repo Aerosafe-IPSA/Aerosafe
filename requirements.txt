@@ -10,3 +10,5 @@ httpx
 bcrypt
 pyjwt
 pydantic[email]
+# Module IA (bonus #37)
+scikit-learn

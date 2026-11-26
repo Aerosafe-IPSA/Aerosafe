@@ -16,6 +16,7 @@ API REST (FastAPI) et accès à la base PostgreSQL. Tout le code est organisé e
 | `creer_compte.py` | `CreateurCompte` | Création d'un compte en ligne de commande |
 | `application.py` | `ApplicationAeroSafe` | Assemble l'application et branche les routes |
 | `main.py` | — | Point d'entrée pour uvicorn |
+| `detection_ia.py` | `DetecteurAnomaliesIA`, `LecteurObservations`, `AnalyseIA`, `ComparaisonReglesIA` | Module IA (bonus) : score d'anomalie et comparaison avec les règles |
 
 ## Lancer l'API
 
@@ -64,3 +65,21 @@ Les mots de passe sont hachés avec bcrypt et ne sont jamais stockés ni renvoy�
 ## Ajouter des routes
 
 Créer une classe d'API sur le modèle d'`ApiAeronefs`, puis ajouter son routeur dans `ApplicationAeroSafe._brancher_routes()`. Pour la protéger, passer `dependencies=[Depends(connexion.garde.verifier)]` (compte connecté) ou `connexion.garde_superviseur.verifier` (superviseur seulement).
+
+## Module IA (bonus)
+
+Un modèle **Isolation Forest** (scikit-learn) est entraîné sur l'historique des positions, sans données étiquetées : il apprend seul ce qu'est un vol ordinaire et donne à chaque observation un score d'anomalie entre 0 et 1.
+
+```bash
+python -m backend.detection_ia
+```
+
+La commande entraîne le modèle sur la base, puis affiche :
+
+- la **comparaison avec les règles R1 à R5** : observations signalées par les deux approches, par les règles seules, par l'IA seule, et taux d'accord ;
+- les dix observations les plus atypiques, avec les règles qu'elles dépassent.
+
+Le modèle utilise sept valeurs par observation : altitude, vitesse, taux vertical, variation de vitesse et de cap depuis l'observation précédente, durée depuis le dernier contact et ancienneté de la position. Il faut au moins 50 observations en base.
+
+Les deux approches se complètent : les règles expliquent toujours pourquoi elles se déclenchent, alors que l'IA repère aussi des vols inhabituels qu'aucun seuil ne couvre, sans pouvoir dire pourquoi. La comparaison utilise les seuils de départ du cahier des charges ; elle pourra lire directement les alertes enregistrées quand l'issue #22 sera terminée.
+
