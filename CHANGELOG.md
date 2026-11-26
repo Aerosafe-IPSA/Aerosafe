@@ -2,6 +2,19 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/). Une version par sprint ayant livré du code.
 
+## [v0.4.0] — 23 novembre 2026 — Sprints 4 et 5
+
+### Ajouté
+- Collecte OpenSky toutes les 60 secondes (`python -m collector`) : classe `CollecteurOpenSky`, accès OAuth2 ou anonyme, erreurs gérées sans arrêt du service.
+- Historique des positions en base : classes `BaseDeDonnees` et `DepotPositions`, tables `aircraft` et `observation`, aucune observation en double.
+- API FastAPI (`uvicorn backend.main:app`) : `GET /aircraft?q=`, `GET /aircraft/{icao24}` et `GET /aircraft/{icao24}/trajectory`.
+- Moteur de règles : classe abstraite `Regle`, règles R1 (délai de contact) et R2 (position ancienne), classe `MoteurRegles`.
+- Pages de connexion et de recherche (`frontend/`), encore statiques.
+- Intégration continue : ruff et pytest lancés à chaque pull request, obligatoires pour fusionner dans `main`.
+
+### Supprimé
+- Script `ingestion/test_opensky.py`, remplacé par le collecteur.
+
 ## [v0.3.0] — 9 novembre 2026 — Sprint 3
 
 ### Ajouté

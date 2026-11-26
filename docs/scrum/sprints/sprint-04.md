@@ -31,10 +31,44 @@
 
 Voir la discussion GitHub « Daily – Sprint 4 ».
 
-## Revue
+## Revue (23 novembre 2026)
 
-*(à remplir le 15 novembre)*
+> Compte rendu rédigé par le Product Owner avec huit jours de retard, à partir de l'état du dépôt.
 
-## Rétrospective
+| Story | Responsable | Points | État au 15 novembre | Trace |
+|---|---|---|---|---|
+| #15 Récupérer les avions sur OpenSky toutes les minutes | Lucas | 5 | Livrée le 9 nov. | PR #55 |
+| #19 Tests automatiques à chaque PR (CI) | Tov | 2 | Livrée le 9 nov. | PR #49 |
+| #25 Page de connexion | Teddy | 2 | Livrée le 9 nov. | PR #54 |
+| #26 Page de recherche | Teddy | 3 | Livrée le 9 nov. | PR #56 |
+| #16 Enregistrer l'historique des positions en base | Lucas | 3 | En retard, livrée le 20 nov. | PR #59 |
+| #20 Moteur de règles + règles R1 et R2 | Ryan | 5 | En retard, livrée le 20 nov. | PR #61 |
+| #18 Connexion avec un rôle | Ryan | 5 | Non livrée | PR #58 ouverte |
 
-*(à remplir le 15 novembre)*
+**Bilan** : 12 points livrés sur 25 à la date de fin, 20 au 20 novembre. La connexion (#18) est reportée au sprint 7. Ryan a repris la connexion (#18), confiée à Tov au planning.
+
+**Réserves du Product Owner sur des stories acceptées** :
+
+- #25 et #26 : les pages sont statiques. La page de connexion compare le mot de passe dans le JavaScript, en clair, et la recherche affiche des données inventées. Elles devront appeler l'API (`POST /login`, `GET /aircraft`).
+- #20 : le moteur n'a pas de tests et n'est pas encore appelé par la collecte. Les règles comparent à l'heure courante au lieu de l'heure de l'observation. Ces points sont repris avec #21 et #22.
+
+## Rétrospective (23 novembre 2026)
+
+**Ce qui a marché**
+
+- La première journée a été efficace : quatre stories livrées le 9 novembre, et la CI est obligatoire sur `main` depuis ce jour.
+- La collecte fonctionne en conditions réelles : 923 aéronefs récupérés en mode OAuth2 lors du test du 9 novembre.
+- Les relectures ont eu un effet : la PR #58 a été corrigée sur quatre points en une demi-heure après une demande de changements.
+
+**Ce qui a bloqué**
+
+- Aucune activité sur le dépôt entre le 10 et le 19 novembre, et aucun daily après le 9 novembre.
+- Ni revue ni rétrospective le 15 novembre : le retard n'a été constaté que le 20.
+- Des relectures trop rapides : les PR #54 et #56 ont été approuvées sans commentaire, avec des mots de passe en clair dans le code.
+- Deux développeurs ont construit chacun leur accès à la base (#16 et #18), faute de s'être coordonnés avant de coder.
+
+**Actions**
+
+1. Un daily écrit par personne et par jour jusqu'au rendu, même pour dire « rien fait ».
+2. Avant de coder une story qui touche un fichier commun (`backend/`, `requirements.txt`), l'annoncer dans le daily.
+3. Une relecture contient au moins une phrase sur ce qui a été vérifié.
