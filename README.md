@@ -46,6 +46,18 @@ uvicorn backend.main:app --reload
 - `python -m collector` interroge OpenSky toutes les 60 secondes et enregistre les positions en base (voir [`collector/`](collector/README.md)).
 - `uvicorn backend.main:app --reload` lance l'API ; sa documentation est sur http://127.0.0.1:8000/docs (voir [`backend/`](backend/README.md)).
 
+## Données de secours pour la démo
+
+Si OpenSky ne répond pas, on peut remplir la base avec environ 3 heures de données déjà enregistrées (`data/demo/positions.csv`) :
+
+```bash
+python -m collector.donnees_demo charger
+```
+
+Les positions déjà présentes sont ignorées : on peut lancer la commande plusieurs fois sans créer de doublon.
+
+Pour remplacer ces données par une nouvelle collecte : `python -m collector.donnees_demo exporter`.
+
 ## Vérifier le code
 
 ```bash
