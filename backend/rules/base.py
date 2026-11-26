@@ -1,34 +1,29 @@
-"""
-Classe abstraite Regle — interface commune à toutes les règles de détection d'anomalie.
-"""
+"""Classe abstraite Regle — interface commune à toutes les règles."""
+
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from collector.modeles import EtatVol
+from backend.rules.alerte import Alerte
+from collector.modeles import Aeronef, EtatVol
 
 
 class Regle(ABC):
-    """
-    Classe de base abstraite pour toutes les règles du moteur.
-    Chaque règle concrète doit implémenter la méthode evaluer().
-    """
+    """Classe de base de toutes les règles du moteur."""
+
+    def __init__(self, nom: str, seuil: float) -> None:
+        """Enregistre le nom court de la règle (ex. 'R3') et son seuil."""
+        self._nom = nom
+        self._seuil = seuil
 
     @abstractmethod
-    def evaluer(self, etat: EtatVol) -> bool:
-        """
-        Evalue si l'état de vol déclenche cette règle.
-        Retourne True si une anomalie est détectée, False sinon.
-        """
-        ...
+    def evaluer(self, aeronef: Aeronef) -> Alerte | None:
+        """Renvoie une Alerte si la règle se déclenche, sinon None."""
 
-    @property
-    @abstractmethod
-    def nom(self) -> str:
-        """Nom court de la règle, utilisé dans les messages d'alerte."""
-        ...
-
-    @property
-    @abstractmethod
-    def description(self) -> str:
-        """Description humaine de l'anomalie détectée."""
-        ...
+    def _alerte(
+        self, aeronef: Aeronef, etat: EtatVol, valeur: float, message: str
+    ) -> Alerte:
+        """Fabrique l'alerte de cette règle pour l'état donné."""
+        return Alerte(
+            aeronef.icao24, self._nom, etat.horodatage, valeur, self._seuil, message
+        )
