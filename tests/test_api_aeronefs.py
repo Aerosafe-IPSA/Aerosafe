@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from backend.application import ApplicationAeroSafe
 from backend.bdd import BaseDeDonnees
+from backend.depot_utilisateurs import DepotUtilisateurs
 from collector.depot_positions import DepotPositions
 from collector.modeles import Aeronef, EtatVol
 
@@ -39,7 +40,7 @@ def aeronef(icao24, callsign, horodatage, altitude=9144.0, au_sol=False, contact
 
 @pytest.fixture
 def client():
-    """API branchée sur une base de test contenant trois aéronefs."""
+    """API branchée sur une base de test contenant trois aéronefs, client connecté."""
     base = BaseDeDonnees("sqlite://")
     depot = DepotPositions(base)
     # AFR1462 : trois positions, une par minute, en descente
@@ -49,7 +50,13 @@ def client():
     depot.enregistrer([aeronef("398b1f", "AFR6204", T0 + 120, None, au_sol=True)])
     # RYR8GH : plus aucun message depuis 7 minutes
     depot.enregistrer([aeronef("4ca7b3", "RYR8GH", T0 + 120, contact=T0 + 120 - 420)])
-    return TestClient(ApplicationAeroSafe(base).app)
+    DepotUtilisateurs(base).creer("test@aerosafe.fr", "motdepasse")
+    client = TestClient(ApplicationAeroSafe(base).app)
+    connexion = client.post(
+        "/login", json={"email": "test@aerosafe.fr", "mot_de_passe": "motdepasse"}
+    )
+    client.headers["Authorization"] = f"Bearer {connexion.json()['access_token']}"
+    return client
 
 
 def test_recherche_par_indicatif_sans_tenir_compte_de_la_casse(client):
@@ -128,3 +135,11 @@ def test_trajet_limite_aux_dernieres_minutes(client):
 
 def test_trajet_aeronef_inconnu(client):
     assert client.get("/aircraft/ffffff/trajectory").status_code == 404
+
+
+def test_routes_refusees_sans_jeton(client):
+    del client.headers["Authorization"]
+
+    assert client.get("/aircraft").status_code == 401
+    assert client.get("/aircraft/39bd24").status_code == 401
+    assert client.get("/aircraft/39bd24/trajectory").status_code == 401
