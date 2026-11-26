@@ -45,6 +45,7 @@ uvicorn backend.main:app --reload
 
 - `python -m collector` interroge OpenSky toutes les 60 secondes et enregistre les positions en base (voir [`collector/`](collector/README.md)).
 - `uvicorn backend.main:app --reload` lance l'API ; sa documentation est sur http://127.0.0.1:8000/docs (voir [`backend/`](backend/README.md)).
+- L'interface web est servie par l'API : http://127.0.0.1:8000/ (voir [`frontend/`](frontend/README.md)).
 
 ## Données de secours pour la démo
 
