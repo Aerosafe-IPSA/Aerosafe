@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AeroSafe - Fiche avion</title>
+
+    <!-- Leaflet : la carte -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Chart.js : les graphiques -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:40px;
+            background:#f4f4f4;
+            color:#17212e;
+        }
+
+        a{
+            color:#0078d4;
+        }
+
+        .titre{
+            display:flex;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:12px;
+            margin:16px 0 24px;
+        }
+
+        .titre h1{
+            margin:0;
+        }
+
+        .discret{
+            color:#5a6878;
+        }
+
+        .etiquette{
+            padding:4px 10px;
+            border-radius:12px;
+            font-size:13px;
+            font-weight:bold;
+            background:#edf0f4;
+        }
+
+        .etiquette.vol{ background:#e3f3ec; color:#1d7a55; }
+        .etiquette.alerte{ background:#fbeae8; color:#c0342b; }
+
+        .panneau{
+            background:white;
+            border:1px solid #ddd;
+            border-radius:8px;
+            padding:16px;
+            margin-bottom:24px;
+        }
+
+        .panneau h2{
+            margin:0 0 12px;
+            font-size:18px;
+        }
+
+        .indicateurs{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+            gap:16px;
+        }
+
+        .indicateurs small{
+            display:block;
+            color:#5a6878;
+        }
+
+        .indicateurs b{
+            font-size:20px;
+        }
+
+        .grille{
+            display:grid;
+            grid-template-columns:3fr 2fr;
+            gap:24px;
+        }
+
+        #carte{
+            height:440px;
+            border-radius:6px;
+        }
+
+        .courbe{
+            height:125px;
+            margin-bottom:12px;
+        }
+
+        .courbe-titre{
+            font-size:13px;
+            color:#5a6878;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th, td{
+            border:1px solid #ddd;
+            padding:12px;
+            text-align:left;
+        }
+
+        th{
+            background:#0078d4;
+            color:white;
+        }
+
+        .message{
+            padding:16px;
+            border-radius:8px;
+            background:#fff4ce;
+            margin-bottom:24px;
+        }
+
+        .cache{
+            display:none;
+        }
+
+        @media (max-width: 900px){
+            body{ margin:16px; }
+            .grille{ grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<a href="recherche.html">← Retour à la recherche</a>
+
+<div id="message" class="message cache"></div>
+
+<div id="contenu" class="cache">
+
+    <div class="titre">
+        <h1 id="indicatif"></h1>
+        <span id="statut" class="etiquette"></span>
+        <span id="nb-alertes" class="etiquette alerte cache"></span>
+        <span class="discret">Code ICAO24 <b id="icao24"></b> · <span id="pays"></span></span>
+    </div>
+
+    <section class="panneau indicateurs">
+        <div><small>Altitude</small><b id="altitude"></b></div>
+        <div><small>Vitesse</small><b id="vitesse"></b></div>
+        <div><small>Cap</small><b id="cap"></b></div>
+        <div><small>Taux vertical</small><b id="taux-vertical"></b></div>
+        <div><small>Position</small><b id="position"></b></div>
+        <div><small>Dernier contact</small><b id="dernier-contact"></b></div>
+    </section>
+
+    <div class="grille">
+        <section class="panneau">
+            <h2>Trajet</h2>
+            <div id="carte"></div>
+        </section>
+
+        <section class="panneau">
+            <h2>Évolution</h2>
+            <div class="courbe-titre">Altitude (m)</div>
+            <div class="courbe"><canvas id="graphe-altitude"></canvas></div>
+            <div class="courbe-titre">Vitesse (m/s)</div>
+            <div class="courbe"><canvas id="graphe-vitesse"></canvas></div>
+            <div class="courbe-titre">Cap (°)</div>
+            <div class="courbe"><canvas id="graphe-cap"></canvas></div>
+        </section>
+    </div>
+
+    <section class="panneau">
+        <h2>Alertes de cet avion</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date et heure</th>
+                    <th>Règle</th>
+                    <th>Explication</th>
+                    <th>Valeur observée</th>
+                    <th>Seuil</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody id="alertes">
+            </tbody>
+        </table>
+    </section>
+
+</div>
+
+<script>
+
+// Adresse de l'API (uvicorn backend.main:app)
+const API = "http://localhost:8000";
+
+// L'avion à afficher est dans l'adresse : fiche-avion.html?icao24=39bd24
+// Avec ?demo, la page affiche un vol fictif sans appeler l'API.
+const parametres = new URLSearchParams(window.location.search);
+const icao24 = parametres.get("icao24");
+const modeDemo = parametres.has("demo");
+
+
+// ---------- Mise en forme ----------
+
+function nombre(valeur, unite, decimales = 0){
+    if (valeur === null || valeur === undefined) return "—";
+    return valeur.toLocaleString("fr-FR", { maximumFractionDigits: decimales }) + " " + unite;
+}
+
+function dateHeure(texte){
+    if (!texte) return "—";
+    return new Date(texte).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" });
+}
+
+function heure(texte){
+    return new Date(texte).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+function ilYa(texte){
+    if (!texte) return "—";
+    const secondes = Math.round((Date.now() - new Date(texte)) / 1000);
+    if (secondes < 60) return "il y a " + secondes + " s";
+    if (secondes < 3600) return "il y a " + Math.round(secondes / 60) + " min";
+    return dateHeure(texte);
+}
+
+// Évite qu'un texte venant de l'API soit lu comme du HTML
+function echapper(texte){
+    const div = document.createElement("div");
+    div.textContent = texte ?? "—";
+    return div.innerHTML;
+}
+
+function afficherMessage(html){
+    const zone = document.getElementById("message");
+    zone.innerHTML = html;
+    zone.classList.remove("cache");
+}
+
+
+// ---------- Lecture des données ----------
+
+async function lireApi(chemin){
+    const reponse = await fetch(API + chemin);
+    if (reponse.status === 404) return null;
+    if (!reponse.ok) throw new Error("Erreur " + reponse.status);
+    return reponse.json();
+}
+
+async function chargerDepuisApi(){
+    const code = encodeURIComponent(icao24);
+    const [fiche, trajet] = await Promise.all([
+        lireApi("/aircraft/" + code),
+        lireApi("/aircraft/" + code + "/trajectory")
+    ]);
+
+    // L'API des alertes n'existe pas encore : si elle ne répond pas, on n'affiche aucune alerte
+    let alertes = null;
+    try {
+        alertes = await lireApi("/aircraft/" + code + "/alerts");
+    } catch (erreur) {
+        alertes = null;
+    }
+
+    return { fiche, trajet, alertes };
+}
+
+// Vol fictif entre Paris et Bordeaux, avec une alerte R3
+function donneesDemo(){
+    const trajet = [];
+    const debut = Date.now() - 30 * 60 * 1000;
+
+    for (let i = 0; i <= 30; i++){
+        trajet.push({
+            horodatage: new Date(debut + i * 60 * 1000).toISOString(),
+            latitude: 48.7 - i * 0.155,
+            longitude: 2.35 - i * 0.095 + Math.sin(i / 5) * 0.1,
+            altitude: i === 27 ? 9600 : 10200 + Math.sin(i / 4) * 150,
+            vitesse: 228 + Math.sin(i / 3) * 6,
+            cap: 205 + Math.sin(i / 5) * 8,
+            taux_vertical: i === 27 ? -18.4 : 0,
+            au_sol: false
+        });
+    }
+
+    const derniere = trajet[trajet.length - 1];
+
+    return {
+        fiche: {
+            icao24: "39bd24",
+            callsign: "AFR1462",
+            pays_origine: "France",
+            statut: "En vol",
+            dernier_contact: derniere.horodatage,
+            derniere_position: derniere
+        },
+        trajet,
+        alertes: [{
+            nom_regle: "R3",
+            date_heure: trajet[27].horodatage,
+            message: "Variation importante d'altitude",
+            valeur_observee: 18.4,
+            seuil: 15,
+            statut: "en cours"
+        }]
+    };
+}
+
+
+// ---------- Affichage ----------
+
+function afficherFiche(fiche, alertes){
+    document.getElementById("indicatif").textContent = fiche.callsign || fiche.icao24;
+    document.getElementById("icao24").textContent = fiche.icao24;
+    document.getElementById("pays").textContent = fiche.pays_origine || "Pays inconnu";
+
+    const statut = document.getElementById("statut");
+    statut.textContent = fiche.statut;
+    if (fiche.statut === "En vol") statut.classList.add("vol");
+    if (fiche.statut === "Contact perdu") statut.classList.add("alerte");
+
+    const enCours = (alertes || []).filter(alerte => alerte.statut === "en cours").length;
+    if (enCours > 0){
+        const etiquette = document.getElementById("nb-alertes");
+        etiquette.textContent = enCours + (enCours > 1 ? " alertes en cours" : " alerte en cours");
+        etiquette.classList.remove("cache");
+    }
+
+    const position = fiche.derniere_position || {};
+    document.getElementById("altitude").textContent = nombre(position.altitude, "m");
+    document.getElementById("vitesse").textContent = nombre(position.vitesse, "m/s");
+    document.getElementById("cap").textContent = nombre(position.cap, "°");
+    document.getElementById("taux-vertical").textContent = nombre(position.taux_vertical, "m/s", 1);
+    document.getElementById("position").textContent =
+        position.latitude == null ? "—" : position.latitude.toFixed(2) + "° " + position.longitude.toFixed(2) + "°";
+    document.getElementById("dernier-contact").textContent = ilYa(fiche.dernier_contact);
+}
+
+function afficherCarte(trajet, alertes){
+    // Sans zoom à la molette, faire défiler la page ne dézoome pas la carte (les boutons + et − restent)
+    const carte = L.map("carte", { scrollWheelZoom: false });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap"
+    }).addTo(carte);
+
+    // OpenSky envoie parfois des positions sans coordonnées : on les ignore
+    const points = trajet
+        .filter(position => position.latitude != null && position.longitude != null)
+        .map(position => [position.latitude, position.longitude]);
+
+    if (points.length === 0){
+        carte.setView([46.6, 2.4], 5);
+        L.popup().setLatLng([46.6, 2.4]).setContent("Aucune position connue").openOn(carte);
+        return;
+    }
+
+    const ligne = L.polyline(points, { color: "#12355b", weight: 3 }).addTo(carte);
+    carte.fitBounds(ligne.getBounds(), { padding: [30, 30] });
+
+    L.circleMarker(points[0], { radius: 6, color: "#12355b", fillColor: "white", fillOpacity: 1 })
+        .addTo(carte).bindTooltip("Départ " + heure(trajet[0].horodatage));
+    L.marker(points[points.length - 1])
+        .addTo(carte).bindTooltip("Dernière position " + heure(trajet[trajet.length - 1].horodatage));
+
+    // Un point rouge à l'endroit où chaque alerte s'est déclenchée
+    (alertes || []).forEach(alerte => {
+        const position = positionLaPlusProche(trajet, alerte.date_heure);
+        if (!position) return;
+        L.circleMarker([position.latitude, position.longitude], { radius: 7, color: "white", fillColor: "#c0342b", fillOpacity: 1 })
+            .addTo(carte).bindTooltip(alerte.nom_regle + " · " + heure(alerte.date_heure));
+    });
+}
+
+function positionLaPlusProche(trajet, date){
+    const instant = new Date(date).getTime();
+    let meilleure = null;
+    trajet.forEach(position => {
+        if (position.latitude == null) return;
+        const ecart = Math.abs(new Date(position.horodatage).getTime() - instant);
+        if (!meilleure || ecart < meilleure.ecart) meilleure = { ecart, position };
+    });
+    return meilleure ? meilleure.position : null;
+}
+
+function graphique(idCanvas, trajet, champ, options = {}){
+    new Chart(document.getElementById(idCanvas), {
+        type: "line",
+        data: {
+            labels: trajet.map(position => heure(position.horodatage)),
+            datasets: [{
+                data: trajet.map(position => position[champ]),
+                borderColor: "#12355b",
+                backgroundColor: "#12355b",
+                borderWidth: 2,
+                pointRadius: options.points ? 2 : 0,
+                showLine: !options.points
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { maxTicksLimit: 6 } },
+                y: { min: options.min, max: options.max }
+            }
+        }
+    });
+}
+
+function afficherGraphiques(trajet){
+    graphique("graphe-altitude", trajet, "altitude");
+    graphique("graphe-vitesse", trajet, "vitesse");
+    // Le cap passe de 359° à 0° sans vrai changement : des points évitent une ligne trompeuse
+    graphique("graphe-cap", trajet, "cap", { points: true, min: 0, max: 360 });
+}
+
+function afficherAlertes(alertes){
+    const tbody = document.getElementById("alertes");
+
+    if (alertes === null){
+        tbody.innerHTML = `<tr><td colspan="6">Les alertes ne sont pas encore disponibles.</td></tr>`;
+        return;
+    }
+    if (alertes.length === 0){
+        tbody.innerHTML = `<tr><td colspan="6">Aucune alerte pour cet avion.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = "";
+    alertes.forEach(alerte => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${dateHeure(alerte.date_heure)}</td>
+                <td><b>${echapper(alerte.nom_regle)}</b></td>
+                <td>${echapper(alerte.message)}</td>
+                <td>${nombre(alerte.valeur_observee, "", 1)}</td>
+                <td>${nombre(alerte.seuil, "", 1)}</td>
+                <td><span class="etiquette ${alerte.statut === "en cours" ? "alerte" : ""}">${echapper(alerte.statut)}</span></td>
+            </tr>
+        `;
+    });
+}
+
+
+// ---------- Démarrage ----------
+
+async function demarrer(){
+    if (!icao24 && !modeDemo){
+        afficherMessage(`Aucun avion sélectionné. <a href="recherche.html">Rechercher un avion</a>
+            ou <a href="?demo">voir un exemple</a>.`);
+        return;
+    }
+
+    let donnees;
+    try {
+        donnees = modeDemo ? donneesDemo() : await chargerDepuisApi();
+    } catch (erreur) {
+        afficherMessage(`Impossible de joindre l'API (${echapper(API)}). Vérifiez qu'elle est lancée.
+            <a href="?demo">Voir un exemple</a>.`);
+        return;
+    }
+
+    if (!donnees.fiche || !donnees.trajet){
+        afficherMessage(`Aucun avion avec le code <b>${echapper(icao24)}</b>. <a href="recherche.html">Nouvelle recherche</a>.`);
+        return;
+    }
+
+    if (modeDemo){
+        afficherMessage("Mode démo : les données affichées sont fictives.");
+    }
+
+    // La page doit être visible avant de dessiner la carte et les graphiques
+    document.getElementById("contenu").classList.remove("cache");
+    document.title = "AeroSafe - " + (donnees.fiche.callsign || donnees.fiche.icao24);
+
+    afficherFiche(donnees.fiche, donnees.alertes);
+    afficherCarte(donnees.trajet, donnees.alertes);
+    afficherGraphiques(donnees.trajet);
+    afficherAlertes(donnees.alertes);
+}
+
+demarrer();
+
+</script>
+
+</body>
+</html>
