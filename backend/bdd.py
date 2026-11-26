@@ -1,7 +1,8 @@
 """Connexion à PostgreSQL et tables de l'historique des vols.
 
 Les tables suivent le modèle de données du cahier des charges V3 :
-``aircraft`` (un aéronef) et ``observation`` (une position reçue à un instant).
+``aircraft`` (un aéronef), ``observation`` (une position reçue à un instant) et
+``app_user`` (un compte).
 """
 
 from __future__ import annotations
@@ -72,6 +73,20 @@ class ObservationTable(Base):
     on_ground: Mapped[bool] = mapped_column(Boolean, default=False)
     last_contact: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     time_position: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+
+
+class UtilisateurTable(Base):
+    """Table ``app_user`` : un compte de l'application et son rôle.
+
+    Le mot de passe n'est jamais stocké en clair, seulement son hash bcrypt.
+    """
+
+    __tablename__ = "app_user"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True)
+    mot_de_passe_hash: Mapped[str] = mapped_column(String(128))
+    role: Mapped[str] = mapped_column(String(16), default="utilisateur")
 
 
 class BaseDeDonnees:

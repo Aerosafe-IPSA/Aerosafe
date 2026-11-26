@@ -14,3 +14,6 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+
+# Lots de migration (fichiers de travail, pas du code source)
+pour-ryan-18/

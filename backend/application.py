@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from backend.api_aeronefs import ApiAeronefs
+from backend.api_connexion import ApiConnexion
 from backend.bdd import BaseDeDonnees
 from backend.depot_aeronefs import DepotAeronefs
+from backend.depot_utilisateurs import DepotUtilisateurs
 
 
 class ApplicationAeroSafe:
     """Crée l'application FastAPI et y branche les routes de chaque domaine.
 
-    Pour ajouter un domaine (connexion, alertes, règles), il suffit de créer sa
-    classe d'API et d'ajouter son routeur dans ``_brancher_routes``.
+    Toutes les routes, sauf ``/login``, exigent un jeton valide (exigence BNF-03).
+    Pour ajouter un domaine (alertes, règles), il suffit de créer sa classe d'API
+    et d'ajouter son routeur dans ``_brancher_routes``.
     """
 
     VERSION = "0.4.0"
@@ -34,7 +37,12 @@ class ApplicationAeroSafe:
 
     def _brancher_routes(self) -> None:
         """Ajoute à l'application les routes de chaque domaine."""
-        self._app.include_router(ApiAeronefs(DepotAeronefs(self._base)).routeur)
+        connexion = ApiConnexion(DepotUtilisateurs(self._base))
+        compte_connecte = [Depends(connexion.garde.verifier)]
+        self._app.include_router(connexion.routeur)
+        self._app.include_router(
+            ApiAeronefs(DepotAeronefs(self._base)).routeur, dependencies=compte_connecte
+        )
 
     @property
     def app(self) -> FastAPI:
